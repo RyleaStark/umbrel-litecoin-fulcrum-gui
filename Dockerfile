@@ -10,19 +10,19 @@ FROM node:16-buster-slim AS umbrel-fulcrum-builder
 WORKDIR /app
 
 # Copy 'package-lock.json' and 'package.json'
-COPY yarn.lock package.json ./
+COPY package-lock.json package.json ./
 COPY apps ./apps
 
 # Install dependencies
-RUN yarn install
+RUN npm install
 
 # Copy project files and folders to the current working directory (i.e. '/app')
 COPY . .
 
-RUN yarn build:frontend
+RUN npm run build:frontend
 
 # Final image
-FROM node:16-buster-slim AS umbrel-electrs
+FROM node:16-buster-slim AS umbrel-fulcrum
 
 # Copy built code from build stage to '/app' directory
 COPY --from=umbrel-fulcrum-builder /app /app

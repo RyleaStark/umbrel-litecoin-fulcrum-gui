@@ -1,43 +1,35 @@
-<p align="center">
-  <a href="https://umbrel.com">
-    <img src="https://i.imgur.com/5u1Eweg.jpg" alt="Logo">
-  </a>
-  <h1 align="center">Electrs for Umbrel</h1>
-  <p align="center">
-    Run an Electrum server on your Umbrel personal server. An official app by Umbrel. Powered by Electrs.
-    <br />
-    <a href="https://umbrel.com"><strong>umbrel.com »</strong></a>
-    <br />
-    <br />
-    <a href="https://twitter.com/umbrel">
-      <img src="https://img.shields.io/twitter/follow/umbrel?style=social" />
-    </a>
-    <a href="https://t.me/getumbrel">
-      <img src="https://img.shields.io/badge/community-chat-%235351FB">
-    </a>
-    <a href="https://reddit.com/r/getumbrel">
-      <img src="https://img.shields.io/reddit/subreddit-subscribers/getumbrel?style=social">
-    </a>
-    <a href="https://community.getumbrel.com">
-      <img src="https://img.shields.io/badge/community-forum-%235351FB">
-    </a>
-  </p>
-</p>
+# Fulcrum (LTC) for Umbrel
 
-## Getting started
+A Litecoin-aware status and connection GUI for the Fulcrum Electrum server on umbrelOS.
 
-This app can be installed in one click via the Umbrel App Store.
+This repository is derived from [`nmfretz/umbrel-fulcrum`](https://github.com/nmfretz/umbrel-fulcrum), the GUI used by Umbrel's official Fulcrum package. It is intentionally separate from Electrs and speaks to an actual Fulcrum runtime through the Electrum protocol.
 
-## Contributing
+## Runtime contract
 
-We welcome and appreciate new contributions!
+The production Umbrel package supplies:
 
-If you're a developer looking to help but not sure where to begin, look for [these issues](https://github.com/getumbrel/umbrel-electrs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) that have specifically been marked as being friendly to new contributors.
+- `FULCRUM_HOST` and `FULCRUM_PORT` for Fulcrum's Electrum TCP service;
+- `LITECOIN_HOST`, `RPC_PORT`, `RPC_USER`, and `RPC_PASSWORD` for Litecoin Core;
+- `ELECTRUM_LOCAL_SERVICE`, `ELECTRUM_HIDDEN_SERVICE`, and `ELECTRUM_PUBLIC_CONNECTION_PORT` for connection instructions;
+- `/fulcrum-logs/fulcrum.log` for persistent Fulcrum logs.
 
-If you're looking for a bigger challenge, before opening a pull request please [create an issue](https://github.com/getumbrel/umbrel-electrs/issues/new/choose) or [join our community chat](https://t.me/getumbrel) to get feedback, discuss the best way to tackle the challenge, and to ensure that there's no duplication of work.
+The `bitcoind-rpc` npm dependency is retained as a protocol-compatible JSON-RPC client library; the configured daemon and UI terminology are Litecoin-specific.
 
----
+## Development
 
-[![License](https://img.shields.io/github/license/getumbrel/umbrel-electrs?color=%235351FB)](https://github.com/getumbrel/umbrel-electrs/blob/master/LICENSE.md)
+```bash
+yarn install
+yarn dev
+```
 
-[umbrel.com](https://umbrel.com)
+Build the production image:
+
+```bash
+docker build -t umbrel-litecoin-fulcrum-gui .
+```
+
+Tagged `v*` releases publish multi-architecture images to `ghcr.io/ryleastark/umbrel-litecoin-fulcrum-gui`.
+
+## License
+
+MIT

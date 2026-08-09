@@ -25,8 +25,8 @@ async function getVersion() {
   );
 }
 
-// This is a little hacky way of determining if electrs is sync'd to litecoind
-// see https://github.com/romanz/electrs/pull/543#issuecomment-973078262
+// Determine whether Fulcrum has caught up with litecoind by comparing
+// the Electrum header subscription height with Litecoin Core's chain height.
 async function syncPercent() {
   // first, check if litecoind isn't still IBD
   const { result: litecoindResponse } =
@@ -35,7 +35,7 @@ async function syncPercent() {
     return 0;
   }
 
-  // if not IBD, then check litecoind height to electrs height
+  // Compare Litecoin Core's chain height with Fulcrum's Electrum height.
   if (!initClient) {
     await initElectrumClient();
   }
