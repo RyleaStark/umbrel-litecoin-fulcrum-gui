@@ -42,8 +42,51 @@ describe("ConnectionPanel", () => {
     expect(screen.getByText("Copied!")).toBeInTheDocument();
   });
 
+  it("copies every exact Fulcrum payload without the secure-context Clipboard API", async () => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+    const copied: string[] = [];
+    Object.defineProperty(document, "execCommand", {
+      configurable: true,
+      value: vi.fn((command: string) => {
+        if (command !== "copy") return false;
+        const selection = document.getSelection();
+        if (!selection) return false;
+        copied.push(selection.toString());
+        return true;
+      }),
+    });
+
+    render(<ConnectionPanel details={details} />);
+    await userEvent.click(screen.getByRole("button", { name: "Connect" }));
+
+    for (const [name, payload] of [
+      ["Copy address", "umbrel.local"],
+      ["Copy port", "51002"],
+      ["Copy connection string", "umbrel.local:51002:t"],
+    ] as const) {
+      const button = screen.getByRole("button", { name });
+      await userEvent.click(button);
+      expect(copied.at(-1)).toBe(payload);
+      expect(button.closest(".connection-row")).toHaveTextContent("Copied!");
+    }
+
+    expect(copied).toEqual(["umbrel.local", "51002", "umbrel.local:51002:t"]);
+  });
+
+  it("falls back to DOM copying when the Clipboard API rejects", async () => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error("insecure context")) } });
+    const execCommand = vi.fn().mockReturnValue(true);
+    Object.defineProperty(document, "execCommand", { configurable: true, value: execCommand });
+    render(<ConnectionPanel details={details} />);
+    await userEvent.click(screen.getByRole("button", { name: "Connect" }));
+    await userEvent.click(screen.getByRole("button", { name: "Copy port" }));
+    expect(execCommand).toHaveBeenCalledWith("copy");
+    expect(screen.getByText("Copied!")).toBeInTheDocument();
+  });
+
   it("reports a clipboard failure without exposing an internal error", async () => {
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error("private clipboard detail")) } });
+    Object.defineProperty(document, "execCommand", { configurable: true, value: vi.fn().mockReturnValue(false) });
     render(<ConnectionPanel details={details} />);
     await userEvent.click(screen.getByRole("button", { name: "Connect" }));
     await userEvent.click(screen.getByRole("button", { name: "Copy address" }));

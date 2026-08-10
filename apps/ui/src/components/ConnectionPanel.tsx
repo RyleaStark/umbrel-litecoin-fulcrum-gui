@@ -5,16 +5,55 @@ import { useState } from "react";
 import type { Connection, ConnectionDetails } from "@contracts/connections";
 import { ConnectionQr } from "./QrCodeDialog.js";
 
+function copyWithDom(value: string): boolean {
+  const selection = document.getSelection();
+  if (!selection) return false;
+
+  const mark = document.createElement("span");
+  mark.textContent = value;
+  mark.setAttribute("aria-hidden", "true");
+  mark.style.all = "unset";
+  mark.style.position = "fixed";
+  mark.style.top = "0";
+  mark.style.clip = "rect(0, 0, 0, 0)";
+  mark.style.whiteSpace = "pre";
+  mark.style.userSelect = "text";
+  document.body.append(mark);
+
+  const range = document.createRange();
+  range.selectNodeContents(mark);
+
+  try {
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  } finally {
+    selection.removeAllRanges();
+    mark.remove();
+  }
+}
+
+async function copyText(value: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    // Plain-HTTP Umbrel origins cannot rely on the secure-context API.
+  }
+
+  return copyWithDom(value);
+}
+
 function CopyRow({ label, value, copyLabel }: { label: string; value: string; copyLabel: string }) {
   const [feedback, setFeedback] = useState<"" | "Copied!" | "Copy failed">("");
 
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(value);
-      setFeedback("Copied!");
-    } catch {
-      setFeedback("Copy failed");
-    }
+    const copied = await copyText(value);
+    setFeedback(copied ? "Copied!" : "Copy failed");
     window.setTimeout(() => setFeedback(""), 900);
   }
 
