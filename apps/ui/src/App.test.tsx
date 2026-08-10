@@ -5,8 +5,8 @@ import { App } from "./App.js";
 
 const status = { state: "ready", version: "2.1.1", coreHeight: 110, indexedHeight: 110, percent: 100, message: "Fulcrum is synchronized" };
 const connections = {
-  local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002:t", transport: "tcp" },
-  tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002:t", transport: "tcp" }
+  local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002", transport: "tcp" },
+  tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002", transport: "tcp" }
 };
 
 afterEach(() => vi.unstubAllGlobals());

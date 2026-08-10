@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { ConnectionPanel } from "./ConnectionPanel.js";
 
 const details = {
-  local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002:t", transport: "tcp" as const },
-  tor: { address: "fulcrum.example.onion", port: 51002, connectionString: "fulcrum.example.onion:51002:t", transport: "tcp" as const }
+  local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002", transport: "tcp" as const },
+  tor: { address: "fulcrum.example.onion", port: 51002, connectionString: "fulcrum.example.onion:51002", transport: "tcp" as const }
 };
 
 describe("ConnectionPanel", () => {
@@ -28,8 +28,9 @@ describe("ConnectionPanel", () => {
   it("shows a QR code for the active wallet connection", async () => {
     render(<ConnectionPanel details={details} />);
     await userEvent.click(screen.getByRole("button", { name: "Connect" }));
-    const image = await screen.findByRole("img", { name: "QR code for umbrel.local:51002:t" });
+    const image = await screen.findByRole("img", { name: "QR code for umbrel.local:51002" });
     expect(image.getAttribute("src")).toMatch(/^data:image\/svg\+xml/);
+    expect(image).not.toHaveAccessibleName(/:[ts]$/u);
   });
 
   it("copies the complete wallet connection string", async () => {
@@ -38,7 +39,7 @@ describe("ConnectionPanel", () => {
     render(<ConnectionPanel details={details} />);
     await userEvent.click(screen.getByRole("button", { name: "Connect" }));
     await userEvent.click(screen.getByRole("button", { name: "Copy connection string" }));
-    expect(writeText).toHaveBeenCalledWith("umbrel.local:51002:t");
+    expect(writeText).toHaveBeenCalledWith("umbrel.local:51002");
     expect(screen.getByText("Copied!")).toBeInTheDocument();
   });
 
@@ -62,7 +63,7 @@ describe("ConnectionPanel", () => {
     for (const [name, payload] of [
       ["Copy address", "umbrel.local"],
       ["Copy port", "51002"],
-      ["Copy connection string", "umbrel.local:51002:t"],
+      ["Copy connection string", "umbrel.local:51002"],
     ] as const) {
       const button = screen.getByRole("button", { name });
       await userEvent.click(button);
@@ -70,7 +71,24 @@ describe("ConnectionPanel", () => {
       expect(button.closest(".connection-row")).toHaveTextContent("Copied!");
     }
 
-    expect(copied).toEqual(["umbrel.local", "51002", "umbrel.local:51002:t"]);
+    expect(copied).toEqual(["umbrel.local", "51002", "umbrel.local:51002"]);
+  });
+
+  it("orders the exact connection contract and exposes no suffix or unwanted symbol", async () => {
+    render(<ConnectionPanel details={details} />);
+    await userEvent.click(screen.getByRole("button", { name: "Connect" }));
+    const rows = Array.from(document.querySelectorAll(".connection-row"));
+    expect(rows.map((row) => row.querySelector(".row-label")?.textContent)).toEqual([
+      "Address",
+      "Port",
+      "Connection string",
+      "SSL",
+    ]);
+    expect(rows[2]).toHaveTextContent("umbrel.local:51002");
+    expect(rows[3]).toHaveTextContent(/^SSLNone$/u);
+    const dialog = screen.getByRole("dialog", { name: "Connect to Fulcrum" });
+    expect(dialog).not.toHaveTextContent(/:[ts](?:\s|$)/u);
+    expect(dialog).not.toHaveTextContent("😒");
   });
 
   it("falls back to DOM copying when the Clipboard API rejects", async () => {

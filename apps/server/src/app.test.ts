@@ -8,8 +8,8 @@ const service = {
   },
   getConnections() {
     return {
-      local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002:t", transport: "tcp" as const },
-      tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002:t", transport: "tcp" as const }
+      local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002", transport: "tcp" as const },
+      tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002", transport: "tcp" as const }
     };
   },
   async getLegacyVersion() { return "2.1.1"; },
@@ -90,8 +90,8 @@ describe("Fulcrum API", () => {
     expect((await zeroHeight.inject({ method: "GET", url: "/v1/fulcrum/syncPercent" })).body).toBe("null");
     expect((await waiting.inject({ method: "GET", url: "/api/connections" })).json()).toEqual(service.getConnections());
     expect((await waiting.inject({ method: "GET", url: "/v1/fulcrum/electrum-connection-details" })).json()).toEqual({
-      local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002:t" },
-      tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002:t" }
+      local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002" },
+      tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002" }
     });
   });
 

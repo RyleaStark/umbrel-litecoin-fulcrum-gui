@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { createFulcrumGuiService } from "./fulcrum-gui-service.js";
 
 const connections = {
-  local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002:t", transport: "tcp" as const },
-  tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002:t", transport: "tcp" as const }
+  local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002", transport: "tcp" as const },
+  tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002", transport: "tcp" as const }
 };
 
 describe("FulcrumGuiService", () => {

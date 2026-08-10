@@ -14,8 +14,8 @@ describe("GUI API client", () => {
 
   it("validates connection responses", async () => {
     const payload = {
-      local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002:t", transport: "tcp" },
-      tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002:t", transport: "tcp" }
+      local: { address: "umbrel.local", port: 51002, connectionString: "umbrel.local:51002", transport: "tcp" },
+      tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002", transport: "tcp" }
     };
     const fetchFn = vi.fn(async () => new Response(JSON.stringify(payload), { status: 200 }));
     expect(await fetchConnections(fetchFn)).toEqual(payload);
