@@ -16,6 +16,16 @@ describe("StatusHero", () => {
     expect(blocks.every((block) => !block.classList.contains("is-animating"))).toBe(true);
   });
 
+  it("renders an independently fadeable pulse layer inside every indexing block", () => {
+    const { container } = render(<StatusHero status={{ state: "indexing", version: "2.1.1", coreHeight: 100, indexedHeight: 42, percent: 42, message: "Indexing Litecoin blocks" }} />);
+
+    expect(container.querySelectorAll(".index-block")).toHaveLength(6);
+    expect(container.querySelectorAll(".index-block-pulse-fade")).toHaveLength(6);
+    expect(container.querySelectorAll(".index-block-pulse")).toHaveLength(6);
+    expect(container.querySelectorAll(".index-block-complete")).toHaveLength(6);
+  });
+
+
   it("uses accurate indexing copy and exposes progress accessibly", () => {
     const { container } = render(<StatusHero status={{ state: "indexing", version: "2.1.1", coreHeight: 101, indexedHeight: 100, percent: 99.01, message: "Indexing Litecoin blocks" }} />);
 
