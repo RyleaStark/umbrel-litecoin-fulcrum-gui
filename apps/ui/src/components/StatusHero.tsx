@@ -23,6 +23,7 @@ function formatHeight(value: number | null) {
 export function StatusHero({ status }: { status: IndexerStatus }) {
   const progress = Math.max(0, Math.min(status.percent ?? 0, 100));
   const indexedBlocks = status.state === "ready" ? 6 : Math.floor((progress / 100) * 6);
+  const animating = status.state === "indexing";
   const synchronized = status.state === "ready";
   const syncTitle = synchronized ? "Synchronized" : status.state === "indexing" ? "Synchronizing" : runtimeLabels[status.state];
   const artState = status.state === "indexing" ? " is-syncing" : status.state === "ready" ? " is-complete" : "";
@@ -40,7 +41,7 @@ export function StatusHero({ status }: { status: IndexerStatus }) {
 
           <div className={`index-art${artState}`} aria-hidden="true">
             {Array.from({ length: 6 }, (_, index) => (
-              <span className={`index-block${index < indexedBlocks ? " is-indexed" : ""}`} key={index} />
+              <span className={`index-block${index < indexedBlocks ? " is-indexed" : ""}${animating ? " is-animating" : ""}`} key={index} />
             ))}
           </div>
 

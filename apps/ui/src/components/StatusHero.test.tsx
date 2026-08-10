@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 import { StatusHero } from "./StatusHero.js";
 
 describe("StatusHero", () => {
+  it("animates and staggers all six blocks during early indexing", () => {
+    const { container } = render(<StatusHero status={{ state: "indexing", version: "2.1.1", coreHeight: 3_000_000, indexedHeight: 84_000, percent: 2.8, message: "Indexing Litecoin blocks" }} />);
+    const blocks = Array.from(container.querySelectorAll<HTMLElement>(".index-block"));
+
+    expect(blocks).toHaveLength(6);
+    expect(blocks.every((block) => block.classList.contains("is-animating"))).toBe(true);
+  });
+
   it("uses accurate indexing copy and exposes progress accessibly", () => {
     const { container } = render(<StatusHero status={{ state: "indexing", version: "2.1.1", coreHeight: 101, indexedHeight: 100, percent: 99.01, message: "Indexing Litecoin blocks" }} />);
 
@@ -10,7 +18,8 @@ describe("StatusHero", () => {
     expect(screen.getByText("Indexing Litecoin blocks")).toBeInTheDocument();
     expect(screen.queryByText("Synchronized")).not.toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "99.01");
-    expect(container.querySelectorAll(".is-indexed")).toHaveLength(5);
+    expect(container.querySelectorAll(".index-block.is-indexed")).toHaveLength(5);
+    expect(container.querySelectorAll(".index-block.is-animating")).toHaveLength(6);
     expect(container.querySelector(".index-art")).toHaveClass("is-syncing");
     expect(container.querySelector(".index-art")).not.toHaveClass("is-complete");
     expect(container.querySelectorAll(".index-block")).toHaveLength(6);
@@ -22,6 +31,7 @@ describe("StatusHero", () => {
     expect(container.querySelector(".index-art")).not.toHaveClass("is-syncing");
     expect(container.querySelectorAll(".index-block")).toHaveLength(6);
     expect(container.querySelectorAll(".index-block.is-indexed")).toHaveLength(6);
+    expect(container.querySelectorAll(".index-block.is-animating")).toHaveLength(0);
   });
 
   it.each(["waiting-for-core", "connecting", "degraded"] as const)("does not animate blocks in the %s state", (state) => {
@@ -29,5 +39,6 @@ describe("StatusHero", () => {
     expect(container.querySelector(".index-art")).not.toHaveClass("is-syncing");
     expect(container.querySelector(".index-art")).not.toHaveClass("is-complete");
     expect(container.querySelectorAll(".index-block")).toHaveLength(6);
+    expect(container.querySelectorAll(".index-block.is-animating")).toHaveLength(0);
   });
 });
