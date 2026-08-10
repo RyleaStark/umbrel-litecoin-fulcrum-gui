@@ -1,6 +1,7 @@
 import type { ConnectionDetails } from "../../../packages/contracts/src/connections.js";
 import { deriveIndexerStatus, type IndexerStatus } from "../../../packages/contracts/src/status.js";
 import type { FulcrumGuiService } from "./app.js";
+import type { FulcrumLogProgress } from "./fulcrum-log-progress.js";
 
 export interface LitecoinCoreClient {
   getBlockchainInfo(): Promise<{ blocks: number; initialblockdownload: boolean }>;
@@ -14,10 +15,12 @@ export interface FulcrumClient {
 export function createFulcrumGuiService({
   core,
   fulcrum,
+  progress,
   connections,
 }: {
   core: LitecoinCoreClient;
   fulcrum: FulcrumClient;
+  progress?: FulcrumLogProgress;
   connections: ConnectionDetails;
 }): FulcrumGuiService {
   return {
@@ -26,8 +29,16 @@ export function createFulcrumGuiService({
     async getLegacySyncPercent() {
       const coreInfo = await core.getBlockchainInfo();
       if (coreInfo.initialblockdownload) return 0;
-      await fulcrum.getVersion();
-      const indexedHeight = await fulcrum.getTip();
+
+      let indexedHeight: number;
+      try {
+        await fulcrum.getVersion();
+        indexedHeight = await fulcrum.getTip();
+      } catch (error) {
+        const loggedHeight = await progress?.getIndexedHeight();
+        if (loggedHeight === null || loggedHeight === undefined) throw error;
+        indexedHeight = loggedHeight;
+      }
       return (indexedHeight / coreInfo.blocks) * 100;
     },
     async getStatus(): Promise<IndexerStatus> {
@@ -66,9 +77,10 @@ export function createFulcrumGuiService({
           version,
         });
       } catch {
+        const loggedHeight = await progress?.getIndexedHeight() ?? null;
         return deriveIndexerStatus({
           coreHeight: coreInfo.blocks,
-          indexedHeight: null,
+          indexedHeight: loggedHeight,
           initialBlockDownload: false,
           version: null,
         });

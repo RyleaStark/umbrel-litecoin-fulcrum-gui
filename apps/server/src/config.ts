@@ -7,6 +7,7 @@ const environmentSchema = z.object({
   PORT: port.default(3006),
   FULCRUM_HOST: nonempty.default("0.0.0.0"),
   FULCRUM_PORT: port.default(50001),
+  FULCRUM_LOG_PATH: nonempty.default("/fulcrum-logs/fulcrum.log"),
   ELECTRUM_PORT: port.optional(),
   ELECTRUM_PUBLIC_CONNECTION_PORT: port.optional(),
   ELECTRUM_LOCAL_SERVICE: nonempty.default("umbrel.local"),
@@ -28,6 +29,7 @@ export function readConfig(environment: NodeJS.ProcessEnv | Record<string, strin
   return {
     port: parsed.data.PORT,
     fulcrum: { host: parsed.data.FULCRUM_HOST, port: parsed.data.FULCRUM_PORT },
+    fulcrumLogPath: parsed.data.FULCRUM_LOG_PATH,
     connections: {
       localHost: parsed.data.ELECTRUM_LOCAL_SERVICE,
       torHost: parsed.data.ELECTRUM_HIDDEN_SERVICE,

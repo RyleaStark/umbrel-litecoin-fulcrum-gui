@@ -18,6 +18,7 @@ describe("server config", () => {
     })).toMatchObject({
       port: 3006,
       fulcrum: { host: "fulcrum_server_1", port: 50001 },
+      fulcrumLogPath: "/fulcrum-logs/fulcrum.log",
       connections: { localHost: "umbrel.local", torHost: "example.onion", port: 51002 },
       core: { host: "litecoin_core_1", port: 9332, username: "gui", password: "secret" }
     });
@@ -30,6 +31,11 @@ describe("server config", () => {
       connections: { localHost: "umbrel.local", torHost: "/var/lib/tor/electrum/hostname", port: 51002 },
       core: { host: "172.28.0.2", port: 18443, username: "umbrel", password: "secret" }
     });
+  });
+
+  it("uses the mounted Fulcrum log by default and accepts an explicit path", () => {
+    expect(readConfig({ RPC_PASSWORD: "secret" }).fulcrumLogPath).toBe("/fulcrum-logs/fulcrum.log");
+    expect(readConfig({ RPC_PASSWORD: "secret", FULCRUM_LOG_PATH: "/fixture/fulcrum.log" }).fulcrumLogPath).toBe("/fixture/fulcrum.log");
   });
 
   it("rejects missing credentials rather than shipping fallback secrets", () => {

@@ -3,12 +3,14 @@ import { buildApp } from "./app.js";
 import { readConfig } from "./config.js";
 import { createFulcrumClient } from "./fulcrum-client.js";
 import { createFulcrumGuiService } from "./fulcrum-gui-service.js";
+import { createFulcrumLogProgress } from "./fulcrum-log-progress.js";
 import { createLitecoinCoreClient } from "./litecoin-core-client.js";
 
 const config = readConfig(process.env);
 const service = createFulcrumGuiService({
   core: createLitecoinCoreClient(config.core),
   fulcrum: createFulcrumClient(config.fulcrum),
+  progress: createFulcrumLogProgress({ path: config.fulcrumLogPath }),
   connections: createConnectionDetails(config.connections),
 });
 const app = buildApp({ service });

@@ -58,10 +58,30 @@ describe("FulcrumGuiService", () => {
     });
   });
 
-  it("reports connecting when Core is ready but Fulcrum is not", async () => {
+  it("reports indexing from the mounted log while Fulcrum listeners are unavailable", async () => {
+    const service = createFulcrumGuiService({
+      core: { getBlockchainInfo: async () => ({ blocks: 3_157_425, initialblockdownload: false }) },
+      fulcrum: { getTip: async () => { throw new Error("listener closed during indexing"); }, getVersion: vi.fn() },
+      progress: { getIndexedHeight: async () => 87_000 },
+      connections
+    });
+
+    expect(await service.getStatus()).toEqual({
+      state: "indexing",
+      version: null,
+      coreHeight: 3_157_425,
+      indexedHeight: 87_000,
+      percent: 2.76,
+      message: "Indexing Litecoin blocks"
+    });
+    await expect(service.getLegacySyncPercent()).resolves.toBeCloseTo(2.7554, 4);
+  });
+
+  it("reports connecting when neither a listener nor a valid log marker is available", async () => {
     const service = createFulcrumGuiService({
       core: { getBlockchainInfo: async () => ({ blocks: 110, initialblockdownload: false }) },
       fulcrum: { getTip: async () => { throw new Error("not ready"); }, getVersion: vi.fn() },
+      progress: { getIndexedHeight: async () => null },
       connections
     });
 
