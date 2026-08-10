@@ -198,15 +198,10 @@ button { color: inherit; }
   background: linear-gradient(145deg, rgb(19 119 231 / 23%), rgb(19 119 231 / 5%));
   box-shadow: 0 0 28px rgb(19 119 231 / 12%), inset 0 1px rgb(255 255 255 / 8%);
 }
-.index-art.is-syncing .index-block.is-animating {
-  animation: index-travel 2.1s ease-in-out infinite;
+.index-art.is-syncing .index-block {
+  animation: index-progress-pulse 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--pulse-index) * 120ms);
 }
-.index-art.is-syncing .index-block:nth-child(1) { animation-delay: -1.75s; }
-.index-art.is-syncing .index-block:nth-child(2) { animation-delay: -1.4s; }
-.index-art.is-syncing .index-block:nth-child(3) { animation-delay: -1.05s; }
-.index-art.is-syncing .index-block:nth-child(4) { animation-delay: -0.7s; }
-.index-art.is-syncing .index-block:nth-child(5) { animation-delay: -0.35s; }
-.index-art.is-syncing .index-block:nth-child(6) { animation-delay: 0s; }
 .index-art.is-complete .index-block {
   border-color: rgb(94 143 211 / 78%);
   background: linear-gradient(145deg, rgb(19 119 231 / 88%), rgb(9 83 166 / 72%));
@@ -323,20 +318,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, [role="tab"]:focus-v
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes dialog-in { from { opacity: 0; transform: translate(-50%, -48%) scale(0.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 @keyframes loading { from { transform: translateX(-20%); } to { transform: translateX(160%); } }
-@keyframes index-travel {
-  0%, 58%, 100% {
-    border-color: rgb(19 119 231 / 42%);
-    background: linear-gradient(145deg, rgb(19 119 231 / 22%), rgb(19 119 231 / 5%));
-    box-shadow: 0 0 20px rgb(19 119 231 / 10%), inset 0 1px rgb(255 255 255 / 8%);
-    filter: brightness(0.9);
+@keyframes index-progress-pulse {
+  0%, 42%, 100% {
+    filter: brightness(1);
     transform: translateY(var(--block-offset)) scale(1);
   }
-  18% {
-    border-color: rgb(94 143 211 / 82%);
-    background: linear-gradient(145deg, rgb(19 119 231 / 68%), rgb(19 119 231 / 20%));
-    box-shadow: 0 0 34px rgb(19 119 231 / 34%), inset 0 1px rgb(255 255 255 / 20%);
-    filter: brightness(1.3);
-    transform: translateY(calc(var(--block-offset) - 3px)) scale(1.045);
+  14% {
+    filter: brightness(1.65);
+    transform: translateY(var(--block-offset)) scale(1.055);
+    border-color: rgb(19 119 231 / 72%);
+    background: linear-gradient(145deg, rgb(19 119 231 / 42%), rgb(19 119 231 / 12%));
+    box-shadow: 0 0 30px rgb(19 119 231 / 24%), inset 0 1px rgb(255 255 255 / 14%);
   }
 }
 
@@ -378,10 +370,5 @@ button:focus-visible, a:focus-visible, input:focus-visible, [role="tab"]:focus-v
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
-  .index-art.is-syncing .index-block {
-    animation: none !important;
-    filter: none;
-    transform: none;
-  }
-  .index-art.is-complete .index-block { transform: none; }
+  .index-art .index-block { transform: none !important; filter: none !important; animation: none !important; }
 }

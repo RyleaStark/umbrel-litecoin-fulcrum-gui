@@ -3,7 +3,7 @@ name: Verify and publish image
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 

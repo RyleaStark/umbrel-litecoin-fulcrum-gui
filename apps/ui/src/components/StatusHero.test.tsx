@@ -3,12 +3,17 @@ import { describe, expect, it } from "vitest";
 import { StatusHero } from "./StatusHero.js";
 
 describe("StatusHero", () => {
-  it("animates and staggers all six blocks during early indexing", () => {
+  it("assigns progressive pulse indices to all six blocks during early indexing", () => {
     const { container } = render(<StatusHero status={{ state: "indexing", version: "2.1.1", coreHeight: 3_000_000, indexedHeight: 84_000, percent: 2.8, message: "Indexing Litecoin blocks" }} />);
+    const art = container.querySelector(".index-art");
     const blocks = Array.from(container.querySelectorAll<HTMLElement>(".index-block"));
 
+    expect(art).toHaveClass("is-syncing");
+    expect(art).not.toHaveClass("is-complete");
     expect(blocks).toHaveLength(6);
-    expect(blocks.every((block) => block.classList.contains("is-animating"))).toBe(true);
+    expect(blocks.map((block) => block.style.getPropertyValue("--pulse-index"))).toEqual(["0", "1", "2", "3", "4", "5"]);
+    expect(blocks.every((block) => !block.classList.contains("is-indexed"))).toBe(true);
+    expect(blocks.every((block) => !block.classList.contains("is-animating"))).toBe(true);
   });
 
   it("uses accurate indexing copy and exposes progress accessibly", () => {
@@ -19,7 +24,7 @@ describe("StatusHero", () => {
     expect(screen.queryByText("Synchronized")).not.toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "99.01");
     expect(container.querySelectorAll(".index-block.is-indexed")).toHaveLength(5);
-    expect(container.querySelectorAll(".index-block.is-animating")).toHaveLength(6);
+    expect(container.querySelectorAll(".index-block.is-animating")).toHaveLength(0);
     expect(container.querySelector(".index-art")).toHaveClass("is-syncing");
     expect(container.querySelector(".index-art")).not.toHaveClass("is-complete");
     expect(container.querySelectorAll(".index-block")).toHaveLength(6);
