@@ -7,7 +7,7 @@ services:
     environment:
       ELECTRUM_HIDDEN_SERVICE: "notyetset.onion"
       ELECTRUM_LOCAL_SERVICE: "localhost"
-      ELECTRUM_PUBLIC_CONNECTION_PORT: "50001"
+      ELECTRUM_PORT: "51002"
       FULCRUM_HOST: fulcrum
       FULCRUM_PORT: "50001"
       LITECOIN_HOST: litecoind
@@ -36,7 +36,7 @@ services:
     volumes:
       - ./data/fulcrum:/data
     ports:
-      - "50001:50001"
+      - "51002:50001"
     restart: on-failure
 
   litecoind:
