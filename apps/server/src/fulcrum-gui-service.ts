@@ -12,6 +12,10 @@ export interface FulcrumClient {
   getVersion(): Promise<string>;
 }
 
+function isInitialIndexingProgress(loggedHeight: number | null | undefined, coreHeight: number): loggedHeight is number {
+  return loggedHeight !== null && loggedHeight !== undefined && loggedHeight < coreHeight;
+}
+
 export function createFulcrumGuiService({
   core,
   fulcrum,
@@ -36,7 +40,7 @@ export function createFulcrumGuiService({
         indexedHeight = await fulcrum.getTip();
       } catch (error) {
         const loggedHeight = await progress?.getIndexedHeight();
-        if (loggedHeight === null || loggedHeight === undefined) throw error;
+        if (!isInitialIndexingProgress(loggedHeight, coreInfo.blocks)) throw error;
         indexedHeight = loggedHeight;
       }
       return (indexedHeight / coreInfo.blocks) * 100;
@@ -80,7 +84,7 @@ export function createFulcrumGuiService({
         const loggedHeight = await progress?.getIndexedHeight() ?? null;
         return deriveIndexerStatus({
           coreHeight: coreInfo.blocks,
-          indexedHeight: loggedHeight,
+          indexedHeight: isInitialIndexingProgress(loggedHeight, coreInfo.blocks) ? loggedHeight : null,
           initialBlockDownload: false,
           version: null,
         });

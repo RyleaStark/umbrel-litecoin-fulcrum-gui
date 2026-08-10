@@ -94,6 +94,28 @@ describe("FulcrumGuiService", () => {
     await expect(service.getLegacySyncPercent()).rejects.toThrow("not ready");
   });
 
+  it.each([
+    ["equal to", 110],
+    ["ahead of", 111],
+  ])("never infers readiness from a stale log height %s Core", async (_label, loggedHeight) => {
+    const service = createFulcrumGuiService({
+      core: { getBlockchainInfo: async () => ({ blocks: 110, initialblockdownload: false }) },
+      fulcrum: { getTip: async () => { throw new Error("listener unavailable"); }, getVersion: vi.fn() },
+      progress: { getIndexedHeight: async () => loggedHeight },
+      connections
+    });
+
+    expect(await service.getStatus()).toEqual({
+      state: "connecting",
+      version: null,
+      coreHeight: 110,
+      indexedHeight: null,
+      percent: null,
+      message: "Connecting to Fulcrum"
+    });
+    await expect(service.getLegacySyncPercent()).rejects.toThrow("listener unavailable");
+  });
+
   it("preserves the legacy unclamped synchronization percentage", async () => {
     const service = createFulcrumGuiService({
       core: { getBlockchainInfo: async () => ({ blocks: 100, initialblockdownload: false }) },
