@@ -32,6 +32,17 @@ describe("LitecoinCoreClient", () => {
     await expect(client.getBlockchainInfo()).rejects.not.toThrow("wallet-address-sensitive-body");
   });
 
+  it("reads the required Core txindex only as a separate Fulcrum prerequisite", async () => {
+    const client = createLitecoinCoreClient({
+      host: "litecoin", port: 9332, username: "gui", password: "secret",
+      fetchFn: async (_url, init) => {
+        expect(JSON.parse(String(init?.body))).toMatchObject({ method: "getindexinfo", params: ["txindex"] });
+        return new Response(JSON.stringify({ result: { txindex: { synced: false, best_block_height: 90 } }, error: null, id: "fulcrum-gui" }), { status: 200 });
+      },
+    });
+    await expect(client.getTxIndexInfo()).resolves.toEqual({ synced: false, bestBlockHeight: 90 });
+  });
+
   it("rejects daemon errors and malformed results using only safe messages", async () => {
     const rpcError = createLitecoinCoreClient({
       host: "litecoin", port: 9332, username: "gui", password: "secret",

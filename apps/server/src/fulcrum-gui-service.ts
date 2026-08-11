@@ -5,6 +5,7 @@ import type { FulcrumLogProgress } from "./fulcrum-log-progress.js";
 
 export interface LitecoinCoreClient {
   getBlockchainInfo(): Promise<{ blocks: number; initialblockdownload: boolean }>;
+  getTxIndexInfo(): Promise<{ synced: boolean; bestBlockHeight: number | null } | null>;
 }
 
 export interface FulcrumClient {
@@ -27,6 +28,17 @@ export function createFulcrumGuiService({
   progress?: FulcrumLogProgress;
   connections: ConnectionDetails;
 }): FulcrumGuiService {
+  async function requiredCoreIndexStatus(coreHeight: number): Promise<IndexerStatus | null> {
+    try {
+      const index = await core.getTxIndexInfo();
+      if (!index) return { state: "degraded", version: null, coreHeight, indexedHeight: null, percent: null, message: "Litecoin Core transaction index is unavailable" };
+      if (!index.synced) return { state: "waiting-for-core", version: null, coreHeight, indexedHeight: null, percent: null, message: "Waiting for Litecoin Core transaction index" };
+      return null;
+    } catch {
+      return { state: "degraded", version: null, coreHeight, indexedHeight: null, percent: null, message: "Litecoin Core transaction index is unavailable" };
+    }
+  }
+
   return {
     getConnections: () => connections,
     getLegacyVersion: () => fulcrum.getVersion(),
@@ -68,23 +80,34 @@ export function createFulcrumGuiService({
           version: null,
         });
       }
+      const dependency = await requiredCoreIndexStatus(coreInfo.blocks);
+      if (dependency) return dependency;
 
       try {
         const [indexedHeight, version] = await Promise.all([
           fulcrum.getTip(),
           Promise.resolve().then(() => fulcrum.getVersion()).catch(() => null),
         ]);
-        return deriveIndexerStatus({
+        const status = deriveIndexerStatus({
           coreHeight: coreInfo.blocks,
           indexedHeight,
           initialBlockDownload: false,
           version,
         });
+        return status;
       } catch {
         const loggedHeight = await progress?.getIndexedHeight() ?? null;
+        if (isInitialIndexingProgress(loggedHeight, coreInfo.blocks)) {
+          return deriveIndexerStatus({
+            coreHeight: coreInfo.blocks,
+            indexedHeight: loggedHeight,
+            initialBlockDownload: false,
+            version: null,
+          });
+        }
         return deriveIndexerStatus({
           coreHeight: coreInfo.blocks,
-          indexedHeight: isInitialIndexingProgress(loggedHeight, coreInfo.blocks) ? loggedHeight : null,
+          indexedHeight: null,
           initialBlockDownload: false,
           version: null,
         });

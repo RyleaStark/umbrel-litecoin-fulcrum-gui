@@ -5,6 +5,12 @@ const blockchainInfoSchema = z.object({
   blocks: z.number().int().nonnegative(),
   initialblockdownload: z.boolean(),
 });
+const indexInfoSchema = z.object({
+  txindex: z.object({
+    synced: z.boolean(),
+    best_block_height: z.number().int().nonnegative().optional(),
+  }).optional(),
+});
 
 const rpcResponseSchema = z.object({
   result: z.unknown().nullable(),
@@ -65,6 +71,29 @@ export function createLitecoinCoreClient({
         throw new Error("Litecoin Core RPC response was invalid");
       }
       return result.data;
+    },
+    async getTxIndexInfo() {
+      let response: Response;
+      try {
+        response = await fetchFn(endpoint, {
+          method: "POST",
+          headers: { authorization, "content-type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "1.0", id: "fulcrum-gui", method: "getindexinfo", params: ["txindex"] }),
+          redirect: "error",
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+      } catch {
+        throw new Error("Litecoin Core RPC request failed");
+      }
+      if (!response.ok) throw new Error("Litecoin Core RPC request failed");
+      let parsed: z.infer<typeof rpcResponseSchema>;
+      try { parsed = rpcResponseSchema.parse(await response.json()); }
+      catch { throw new Error("Litecoin Core RPC response was invalid"); }
+      if (parsed.error !== null) throw new Error("Litecoin Core RPC returned an error");
+      const result = indexInfoSchema.safeParse(parsed.result);
+      if (!result.success) throw new Error("Litecoin Core RPC response was invalid");
+      const txindex = result.data.txindex;
+      return txindex ? { synced: txindex.synced, bestBlockHeight: txindex.best_block_height ?? null } : null;
     },
   };
 }

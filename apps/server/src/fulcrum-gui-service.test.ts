@@ -7,11 +7,16 @@ const connections = {
   tor: { address: "example.onion", port: 51002, connectionString: "example.onion:51002", transport: "tcp" as const }
 };
 
+const readyCore = (blocks: number, initialblockdownload = false) => ({
+  getBlockchainInfo: async () => ({ blocks, initialblockdownload }),
+  getTxIndexInfo: async () => ({ synced: true, bestBlockHeight: blocks }),
+});
+
 describe("FulcrumGuiService", () => {
   it("waits for Litecoin Core without querying Fulcrum during IBD", async () => {
     const getFulcrumTip = vi.fn();
     const service = createFulcrumGuiService({
-      core: { getBlockchainInfo: async () => ({ blocks: 80, initialblockdownload: true }) },
+      core: readyCore(80, true),
       fulcrum: { getTip: getFulcrumTip, getVersion: vi.fn() },
       connections
     });
@@ -23,7 +28,7 @@ describe("FulcrumGuiService", () => {
 
   it("returns an accurate synchronized status", async () => {
     const service = createFulcrumGuiService({
-      core: { getBlockchainInfo: async () => ({ blocks: 110, initialblockdownload: false }) },
+      core: readyCore(110),
       fulcrum: { getTip: async () => 110, getVersion: async () => "2.1.1" },
       connections
     });
@@ -41,9 +46,29 @@ describe("FulcrumGuiService", () => {
     expect(await service.getLegacySyncPercent()).toBe(100);
   });
 
+  it("keeps Fulcrum readiness separate from its required Core transaction-index prerequisite", async () => {
+    const getTip = vi.fn();
+    const getVersion = vi.fn();
+    const service = createFulcrumGuiService({
+      core: {
+        getBlockchainInfo: async () => ({ blocks: 110, initialblockdownload: false }),
+        getTxIndexInfo: async () => ({ synced: false, bestBlockHeight: 90 }),
+      },
+      fulcrum: { getTip, getVersion },
+      connections,
+    });
+    expect(await service.getStatus()).toMatchObject({
+      state: "waiting-for-core",
+      message: "Waiting for Litecoin Core transaction index",
+      indexedHeight: null,
+    });
+    expect(getTip).not.toHaveBeenCalled();
+    expect(getVersion).not.toHaveBeenCalled();
+  });
+
   it("degrades safely when Litecoin Core is unavailable", async () => {
     const service = createFulcrumGuiService({
-      core: { getBlockchainInfo: async () => { throw new Error("rpcuser:secret"); } },
+      core: { getBlockchainInfo: async () => { throw new Error("rpcuser:secret"); }, getTxIndexInfo: vi.fn() },
       fulcrum: { getTip: vi.fn(), getVersion: vi.fn() },
       connections
     });
@@ -60,7 +85,7 @@ describe("FulcrumGuiService", () => {
 
   it("reports indexing from the mounted log while Fulcrum listeners are unavailable", async () => {
     const service = createFulcrumGuiService({
-      core: { getBlockchainInfo: async () => ({ blocks: 3_157_425, initialblockdownload: false }) },
+      core: readyCore(3_157_425),
       fulcrum: { getTip: async () => { throw new Error("listener closed during indexing"); }, getVersion: vi.fn() },
       progress: { getIndexedHeight: async () => 87_000 },
       connections
@@ -79,7 +104,7 @@ describe("FulcrumGuiService", () => {
 
   it("reports connecting when neither a listener nor a valid log marker is available", async () => {
     const service = createFulcrumGuiService({
-      core: { getBlockchainInfo: async () => ({ blocks: 110, initialblockdownload: false }) },
+      core: readyCore(110),
       fulcrum: { getTip: async () => { throw new Error("not ready"); }, getVersion: vi.fn() },
       progress: { getIndexedHeight: async () => null },
       connections
@@ -99,7 +124,7 @@ describe("FulcrumGuiService", () => {
     ["ahead of", 111],
   ])("never infers readiness from a stale log height %s Core", async (_label, loggedHeight) => {
     const service = createFulcrumGuiService({
-      core: { getBlockchainInfo: async () => ({ blocks: 110, initialblockdownload: false }) },
+      core: readyCore(110),
       fulcrum: { getTip: async () => { throw new Error("listener unavailable"); }, getVersion: vi.fn() },
       progress: { getIndexedHeight: async () => loggedHeight },
       connections
@@ -118,7 +143,7 @@ describe("FulcrumGuiService", () => {
 
   it("preserves the legacy unclamped synchronization percentage", async () => {
     const service = createFulcrumGuiService({
-      core: { getBlockchainInfo: async () => ({ blocks: 100, initialblockdownload: false }) },
+      core: readyCore(100),
       fulcrum: { getTip: async () => 110, getVersion: async () => "2.1.1" },
       connections
     });

@@ -32,7 +32,7 @@ services:
       PEERING: "false"
       ANNOUNCE: "false"
       DATA_DIR: /data
-    command: Fulcrum -D /data _ENV_
+    command: Fulcrum -D /data --ts-format=utc _ENV_
     volumes:
       - ./data/fulcrum:/data
     ports:
