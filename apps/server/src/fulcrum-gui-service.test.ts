@@ -13,17 +13,23 @@ const readyCore = (blocks: number, initialblockdownload = false) => ({
 });
 
 describe("FulcrumGuiService", () => {
-  it("waits for Litecoin Core without querying Fulcrum during IBD", async () => {
-    const getFulcrumTip = vi.fn();
+  it("reports Fulcrum progress during IBD when the required transaction index is synchronized", async () => {
+    const getFulcrumTip = vi.fn().mockResolvedValue(20);
     const service = createFulcrumGuiService({
       core: readyCore(80, true),
-      fulcrum: { getTip: getFulcrumTip, getVersion: vi.fn() },
+      fulcrum: { getTip: getFulcrumTip, getVersion: vi.fn().mockResolvedValue("2.1.1") },
       connections
     });
 
-    expect(await service.getStatus()).toMatchObject({ state: "waiting-for-core", coreHeight: 80 });
-    expect(await service.getLegacySyncPercent()).toBe(0);
-    expect(getFulcrumTip).not.toHaveBeenCalled();
+    expect(await service.getStatus()).toEqual({
+      state: "indexing",
+      version: "2.1.1",
+      coreHeight: 80,
+      indexedHeight: 20,
+      percent: 25,
+      message: "Indexing Litecoin blocks"
+    });
+    expect(getFulcrumTip).toHaveBeenCalledOnce();
   });
 
   it("returns an accurate synchronized status", async () => {
@@ -46,12 +52,12 @@ describe("FulcrumGuiService", () => {
     expect(await service.getLegacySyncPercent()).toBe(100);
   });
 
-  it("keeps Fulcrum readiness separate from its required Core transaction-index prerequisite", async () => {
+  it("waits for the required transaction index during IBD without querying Fulcrum", async () => {
     const getTip = vi.fn();
     const getVersion = vi.fn();
     const service = createFulcrumGuiService({
       core: {
-        getBlockchainInfo: async () => ({ blocks: 110, initialblockdownload: false }),
+        getBlockchainInfo: async () => ({ blocks: 110, initialblockdownload: true }),
         getTxIndexInfo: async () => ({ synced: false, bestBlockHeight: 90 }),
       },
       fulcrum: { getTip, getVersion },

@@ -72,14 +72,6 @@ export function createFulcrumGuiService({
         };
       }
 
-      if (coreInfo.initialblockdownload) {
-        return deriveIndexerStatus({
-          coreHeight: coreInfo.blocks,
-          indexedHeight: null,
-          initialBlockDownload: true,
-          version: null,
-        });
-      }
       const dependency = await requiredCoreIndexStatus(coreInfo.blocks);
       if (dependency) return dependency;
 
